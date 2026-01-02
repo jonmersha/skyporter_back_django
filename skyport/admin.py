@@ -1,53 +1,63 @@
 from django.contrib import admin
-from .models import PassengerTrip, CustomerRequest, Deal
+from .models import (
+    Trip, TravelerProduct, ProductImage, 
+    CustomerRequest, Deal, Enquiry
+)
 
-@admin.register(PassengerTrip)
-class PassengerTripAdmin(admin.ModelAdmin):
-    # What to show in the list view
-    list_display = ('traveler', 'origin', 'destination', 'flight_date', 'available_kg', 'is_active', 'created_at')
-    
-    # How to filter the data in the sidebar
-    list_filter = ('is_active', 'flight_date', 'origin', 'destination')
-    
-    # Which fields can be searched
-    search_fields = ('traveler__username', 'origin', 'destination', 'contact_number')
-    
-    # Grouping the detail view into sections
-    fieldsets = (
-        ('User Info', {'fields': ('traveler', 'contact_number')}),
-        ('Flight Details', {'fields': ('origin', 'destination', 'flight_date', 'available_kg', 'is_active')}),
-        ('Pricing Policy', {'fields': ('price_per_kg', 'laptop_fee', 'smartphone_fee')}),
-    )
+# 1. Product Image Inline
+# This allows you to upload multiple images directly on the TravelerProduct page
+class ProductImageInline(admin.TabularInline):
+    model = ProductImage
+    extra = 1
 
+# 2. Trip Admin
+@admin.register(Trip)
+class TripAdmin(admin.ModelAdmin):
+    list_display = ('destination_city', 'traveler', 'arrival_date', 'laptop_fee', 'mobile_fee', 'is_active')
+    list_filter = ('destination_city', 'is_active', 'arrival_date')
+    search_fields = ('traveler__username', 'destination_city', 'departure_city')
+    list_editable = ('is_active',)
+
+# 3. Traveler Product Admin
+@admin.register(TravelerProduct)
+class TravelerProductAdmin(admin.ModelAdmin):
+    list_display = ('name', 'traveler', 'category', 'price', 'expected_reward', 'arrival_date')
+    list_filter = ('category', 'arrival_date')
+    search_fields = ('name', 'traveler__username', 'description')
+    inlines = [ProductImageInline]
+
+# 4. Customer Request Admin
 @admin.register(CustomerRequest)
 class CustomerRequestAdmin(admin.ModelAdmin):
-    list_display = ('product_name', 'sender', 'delivery_destination', 'weight_kg', 'delivery_reward', 'is_purchase_required')
-    list_filter = ('is_purchase_required', 'delivery_destination', 'created_at')
-    search_fields = ('product_name', 'sender__username', 'pickup_location', 'delivery_destination')
-    date_hierarchy = 'created_at'
+    list_display = ('title', 'customer', 'request_type', 'category', 'to_city', 'is_open')
+    list_filter = ('request_type', 'category', 'is_open')
+    search_fields = ('title', 'customer__username', 'to_city')
 
+# 5. Enquiry Admin (Communication logs)
+@admin.register(Enquiry)
+class EnquiryAdmin(admin.ModelAdmin):
+    list_display = ('id', 'sender', 'receiver', 'enquiry_type', 'is_accepted', 'created_at')
+    list_filter = ('is_accepted', 'created_at')
+    search_fields = ('sender__username', 'receiver__username', 'message')
+    readonly_fields = ('created_at',)
+
+# 6. Deal Admin (The Transaction Hub)
 @admin.register(Deal)
 class DealAdmin(admin.ModelAdmin):
-    list_display = ('get_product', 'get_traveler', 'get_sender', 'status', 'final_agreed_reward', 'is_paid', 'updated_at')
-    list_filter = ('status', 'is_paid')
-    search_fields = ('request__product_name', 'trip__traveler__username', 'request__sender__username')
+    list_display = ('id', 'customer', 'traveler', 'status', 'final_price', 'updated_at')
+    list_filter = ('status', 'updated_at')
+    search_fields = ('customer__username', 'traveler__username', 'id')
+    list_editable = ('status',)
     
-    # Custom display methods to show data from linked models
-    def get_product(self, obj):
-        return obj.request.product_name
-    get_product.short_description = 'Product'
-
-    def get_traveler(self, obj):
-        return obj.trip.traveler.username
-    get_traveler.short_description = 'Traveler'
-
-    def get_sender(self, obj):
-        return obj.request.sender.username
-    get_sender.short_description = 'Sender'
-
-    # Admin Action: Bulk mark as Paid
-    actions = ['mark_as_paid']
-
-    @admin.action(description='Mark selected deals as Paid (Escrow Received)')
-    def mark_as_paid(self, request, queryset):
-        queryset.update(is_paid=True)
+    fieldsets = (
+        ('Parties', {
+            'fields': ('customer', 'traveler')
+        }),
+        ('Sources', {
+            'description': "Only one of these will typically be linked.",
+            'fields': ('trip', 'product', 'request')
+        }),
+        ('Status & Pricing', {
+            'fields': ('status', 'final_price')
+        }),
+    )
