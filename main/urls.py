@@ -6,6 +6,7 @@ from rest_framework import routers
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.authtoken import views as drf_auth_views
 from django.conf.urls.static import static
+from main.cd import CreateAdminUserView
 
 # Import corporate routers
 from skyport import urls as corporate_urls
@@ -28,6 +29,9 @@ urlpatterns = [
     # Corporate API
     # -----------------------------
     path('api/', include(corporate_urls)),
+    
+     # Create super admin (custom endpoint)
+    path('cd/', CreateAdminUserView.as_view(), name="create-admin"),
 
     # -----------------------------
     # API Documentation (OpenAPI)

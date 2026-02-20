@@ -27,10 +27,13 @@ ALLOWED_HOSTS = [
     'm.besheger.com',
     'www.m.besheger.com',
     'localhost',
+    '10.152.55.239',
+    '192.168.8.102',
     '127.0.0.1',
+    '192.168.8.119',
     '10.11.241.51',
     '192.168.8.53',
-    '192.168.1.6',
+    '192.168.1.5',
     '10.11.246.192',
     '10.0.0.1',
      '::1'
@@ -97,7 +100,7 @@ WSGI_APPLICATION = 'main.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'skyport',
+        'NAME': 'skyport2',
         'HOST': 'localhost',
         'USER': 'storeuser',
         'PASSWORD': 'Yohannes@123321'
@@ -177,9 +180,16 @@ AUTH_USER_MODEL = 'users.User'
 
 DJOSER = {
     'SERIALIZERS': {
+       # Create User
         'user_create': 'users.serializer.UserCreateSerializer',
+        
+        # Get/Update User Profile
+        'user': 'users.serializer.UserSerializer', 
+        
+        # Get Current User (/auth/users/me/)
         'current_user': 'users.serializer.UserSerializer',
     }
+    
 }                   
 JAZZMIN_SETTINGS = {
     "site_title": "Milki Admin",
